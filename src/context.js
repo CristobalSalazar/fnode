@@ -1,9 +1,62 @@
 const process = require('process')
 const path = require('path')
 const fs = require('fs')
+const File = require('./file')
 const EventEmitter = require('events')
 
 class Context extends EventEmitter {
+  constructor() {
+    super()
+    this.loadFiles()
+    this.cursor = 0
+  }
+
+  up() {
+    this.cursor = (this.cursor - 1) < 0 ? this.files.length - 1 : this.cursor - 1
+  }
+
+  down() {
+    this.cursor = (this.cursor + 1) % (this.files.length)
+  }
+
+  cwd() {
+    return process.cwd()
+  }
+
+  back() {
+    const back = path.resolve(this.cwd(), '../')
+    this.chdir(back)
+  }
+
+  filepath() {
+    return path.resolve(this.cwd(), this.files[this.cursor].filename)
+  }
+
+  next() {
+    const next = path.resolve(this.cwd(), this.files[this.cursor].filename)
+    this.chdir(next)
+  }
+
+  loadFiles() {
+    this.cursor = 0
+    const cwd = this.cwd()
+    const files = fs.readdirSync(cwd)
+    this.files = files.map(file => {
+      const stats = fs.statSync(path.resolve(cwd, file))
+      return new File(file, stats.isDirectory())
+    })
+  }
+
+  chdir(dir) {
+    const stat = fs.statSync(dir)
+    if (!stat.isDirectory()) {
+      return
+    }
+    process.chdir(dir)
+    this.loadFiles()
+    this.emit('chdir', dir)
+  }
+
   columns() {
     return process.stdout.columns
   }
@@ -11,38 +64,6 @@ class Context extends EventEmitter {
   rows() {
     return process.stdout.rows
   }
-
-  cwd() {
-    return process.cwd()
-  }
-
-  back(cb) {
-    const back = path.resolve(this.cwd(), '../')
-    this.chdir(back, cb)
-  }
-
-  readdir(cb) {
-    fs.readdir(this.cwd(), (err, files) => {
-      if (err) {
-        return cb(err, null)
-      }
-      const filepaths = files.map(file => path.join(this.cwd(), file))
-      cb(null, filepaths)
-    })
-  }
-
-  chdir(path, cb) {
-    fs.stat(path, err => {
-      if (err) return cb(err, null)
-      process.chdir(path)
-      this.emit('chdir', path)
-      cb(null, path)
-    })
-  }
-
-  next(relative, cb) {
-    const next = path.resolve(this.cwd(), relative)
-    this.chdir(next, cb)
-  }
 }
+
 module.exports = Context

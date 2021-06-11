@@ -1,35 +1,51 @@
-const fs = require('fs/promises')
-const path = require('path')
 const chalk = require('chalk')
-const { assert } = require('console')
-const columns = process.stdout.columns
-const rows = process.stdout.rows
+
+const COLUMNS = process.stdout.columns
+const ROWS = process.stdout.rows
+
+function println(str) {
+  process.stdout.write(str + '\n')
+}
 
 module.exports = {
-  async printdir(dir, selection) {
+  /**
+   * Logs the header
+   *
+   * @param {string} text the header text
+   * @private
+   */
+  header(text) {
+    const char = '-'
+    println(new Array(COLUMNS).fill(chalk.yellow(char)).join(''))
+    println(chalk.green(text))
+    println(new Array(COLUMNS).fill(chalk.yellow(char)).join(''))
+  },
+  /**
+   * Prints the directory listing and cursor
+   *
+   * @param {string} dir the directory to search files in
+   * @param {File[]} files files array
+   * @param {number} cursor number representing the index of the selected file
+   */
+  list(dir, files, cursor) {
     console.clear()
-    console.log(dir)
-    console.log(new Array(columns).fill('=').join(''))
-    const files = await fs.readdir(dir)
-    selection ??= files[0]
-    const length = Math.min(rows - 3, files.length)
-    const stats = await Promise.all(
-      files.map(file => fs.stat(path.join(dir, file)))
-    )
+    this.header(dir)
+    const length = Math.min(ROWS - 4, files.length)
 
-    assert(files.length === stats.length)
     for (var i = 0; i < length; i++) {
-      const stat = stats[i]
       const file = files[i]
-      if (file === selection) {
-        console.log(chalk.bgWhite(chalk.black(file)))
-        continue
+      const filename = file.filename
+
+
+      if (i === cursor) {
+        file.isDir
+          ? println(chalk.bgBlueBright(chalk.white(filename.concat('/'))))
+          : println(chalk.bgWhite(chalk.black(filename)))
+      } else if (file.isDir) {
+        println(chalk.blueBright(filename.concat('/')))
+      } else {
+        println(filename)
       }
-      if (stat.isDirectory()) {
-        console.log(chalk.blue(file))
-        continue
-      }
-      console.log(file)
     }
   },
 }

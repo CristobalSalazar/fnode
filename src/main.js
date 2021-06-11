@@ -3,8 +3,8 @@ const Context = require('./context')
 const printer = require('./printer')
 const Router = require('./router')
 const process = require('process')
+
 const stdin = process.stdin
-const stdout = process.stdout
 
 function main() {
   const ctx = new Context()
@@ -14,19 +14,11 @@ function main() {
   if (!stdin.isTTY) {
     throw new Error('must be run in a tty')
   }
-
   stdin.setRawMode(true)
   stdin.setEncoding('utf-8')
   stdin.resume()
-  console.clear()
-  printer.printdir(ctx.cwd())
-  stdin.on('data', data => {
-    if (data === '\u0003') {
-      stdout.write('^C\n')
-      process.exit()
-    }
-    router.handle(data)
-  })
+  printer.list(ctx.cwd(), ctx.files, ctx.cursor)
+  stdin.on('data', key => router.handle(key))
 }
 
 main()
