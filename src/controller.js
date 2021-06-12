@@ -1,57 +1,64 @@
 const childProcess = require('child_process')
 
-class Controller {
-  /**
-   * Creates an instance of Controller.
-   * @param {Context} ctx
-   * @param {printer} printer
-   * @memberof Controller
-   */
-  constructor(ctx, printer) {
-    this.ctx = ctx
-    this.printer = printer
-  }
+function Controller(ctx, printer) {
+  this.ctx = ctx
+  this.printer = printer
+}
 
-  edit() {
-    const editor = process.env.EDITOR || 'vim'
-    childProcess.spawnSync(editor, [this.ctx.filepath()], {
-      shell: true,
-      stdio: 'inherit',
-      cwd: this.ctx.cwd()
-    })
-  }
+Controller.prototype.first = function () {
+    this.ctx.first()
+    this.list()
+}
 
-  open() {
-    childProcess.spawn(`xdg-open` [this.ctx.filepath()])
-  }
+Controller.prototype.last = function () {
+    this.ctx.last()
+    this.list()
+}
 
-  list() {
-    this.printer.list(
-      this.ctx.cwd(),
-      this.ctx.files,
+Controller.prototype.exit = function (code = 0) {
+  console.clear()
+  process.exit(code)
+}
+
+Controller.prototype.edit = function () {
+  const editor = process.env.EDITOR || 'vim'
+  childProcess.spawnSync(editor, [this.ctx.filepath()], {
+    shell: true,
+    stdio: 'inherit',
+    cwd: this.ctx.cwd()
+  })
+}
+
+Controller.prototype.open = function () {
+  childProcess.spawn(`xdg-open` [this.ctx.filepath()])
+}
+
+Controller.prototype.list = function () {
+  this.printer.list(
+    this.ctx.cwd(),
+    this.ctx.files,
       this.ctx.cursor
     )
-  }
+}
 
-  up() {
-    this.ctx.up()
-    this.list()
-  }
+Controller.prototype.up = function () {
+  this.ctx.up()
+  this.list()
+}
 
-  down() {
-    this.ctx.down()
-    this.list()
-  }
+Controller.prototype.down = function () {
+  this.ctx.down()
+  this.list()
+}
 
-  back() {
-    this.ctx.back()
-    this.list()
-  }
+Controller.prototype.back = function () {
+  this.ctx.back()
+  this.list()
+}
 
-  next() {
-    this.ctx.next()
-    this.list()
-  }
+Controller.prototype.next = function () {
+  this.ctx.next()
+  this.list()
 }
 
 module.exports = Controller

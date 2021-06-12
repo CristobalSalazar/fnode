@@ -1,25 +1,48 @@
 const chalk = require('chalk')
-
 const COLUMNS = process.stdout.columns
 const ROWS = process.stdout.rows
 
-function println(str) {
-  process.stdout.write(str + '\n')
-}
-
 module.exports = {
   /**
-   * Logs the header
+   * Prints out a string with new line to stdout
    *
-   * @param {string} text the header text
+   * @param {string} str The string to print out
+   */
+  println(str) {
+    process.stdout.write(str + '\n')
+  },
+
+  /**
+   * Char to use as border decoration
+   *
+   */
+  borderchar: '#',
+
+  /**
+   * Retrieves header lines as array
+   *
+   * @param {string} dir the directory to place in the header
+   * @returns {string[]} Array of header lines
    * @private
    */
-  header(text) {
-    const char = '-'
-    println(new Array(COLUMNS).fill(chalk.yellow(char)).join(''))
-    println(chalk.green(text))
-    println(new Array(COLUMNS).fill(chalk.yellow(char)).join(''))
+  headerlines(dir) {
+     return [
+      new Array(COLUMNS).fill(chalk.yellow(this.borderchar)).join(''),
+      chalk.bold(chalk.green(dir)),
+      new Array(COLUMNS).fill(chalk.yellow(this.borderchar)).join(''),
+     ]
   },
+
+  /**
+   * prints the header
+   *
+   * @param {string} dir the directory to place in the header
+   * @private
+   */
+  printHeader(dir) {
+    this.headerlines(dir).forEach((str) => this.println(str))
+  },
+
   /**
    * Prints the directory listing and cursor
    *
@@ -28,19 +51,22 @@ module.exports = {
    * @param {number} cursor number representing the index of the selected file
    */
   list(dir, files, cursor) {
-    console.clear()
-    this.header(dir)
     const length = Math.min(ROWS - 4, files.length)
+    let offset = 0 
 
-    for (var i = 0; i < length; i++) {
+    if (cursor > (length - 1)) {
+      offset = (cursor - length) + 1
+    }
+
+    console.clear()
+    this.printHeader(dir)
+    for (var i = offset; i < length + offset; i++) {
       const file = files[i]
       const filename = file.filename
-
-
       if (i === cursor) {
         file.isDir
-          ? println(chalk.bgBlueBright(chalk.white(filename.concat('/'))))
-          : println(chalk.bgWhite(chalk.black(filename)))
+          ? this.println(chalk.bgBlueBright(chalk.white(filename.concat('/'))))
+          : this.println(chalk.bgWhite(chalk.black(filename)))
       } else if (file.isDir) {
         println(chalk.blueBright(filename.concat('/')))
       } else {
